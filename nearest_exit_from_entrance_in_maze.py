@@ -2,82 +2,77 @@ class Solution:
 
     def __init__(self):
         self.m, self.n = 0, 0
-        self.bottom_exit_x = 0
-        self.right_exit_y = 0
         self.index_map = {}
         self.explored_for_mapping = []
-        self.step_count_explored_cells = []
-
 
     def get_adjacent_indices(self, i, j, m, n):
         adjacent_indices = []
         if i > 0:
             adjacent_indices.append((i - 1, j))
-        if i + 1 < m+1:
+        if i != 0 and i + 1 < m + 1:
             adjacent_indices.append((i + 1, j))
         if j > 0:
             adjacent_indices.append((i, j - 1))
-        if j + 1 < n+1:
+        if j != n and j + 1 < n + 1:
             adjacent_indices.append((i, j + 1))
         return adjacent_indices
 
+    def populate_adjecent_node_dict(self, positions):
+        for position in positions:
+            if position not in self.explored_for_mapping:
+                self.explored_for_mapping.append(tuple(position))
+                next_points = self.get_adjacent_indices(position[0], position[1], self.m + 1, self.n + 1)
+                self.index_map.update({
+                    tuple(position): next_points
+                })
+                if next_points:
+                    self.populate_adjecent_node_dict(next_points)
 
-    def get_steps(self, adjacent_indices, maze):
-        for adjacent_indice in adjacent_indices:
-            if adjacent_indice and adjacent_indice not in self.explored_for_mapping:
-                if maze[adjacent_indice[0]][adjacent_indice[1]] != "+":
-                    next_adjacent_indices = self.get_adjacent_indices(self.m, self.n, adjacent_indice[0], adjacent_indice[1])
-                    self.explored_for_mapping.append(adjacent_indice)
-                    if next_adjacent_indices:
-                        self.index_map.update({
-                            tuple(adjacent_indice): next_adjacent_indices
-                        })
-                        for next_adjacent_indice in next_adjacent_indices:
-                            self.get_steps(next_adjacent_indices, maze)
-
-    def get_exits(self, maze):
-        exits = []
-        for index_row, value_row in enumerate(maze):
-            for index_column, value_column in enumerate(value_row):
-                if value_column == ".":
-                    exits.append((index_row, index_column))
-        return exits
-
-    def get_cost_from_each_movement(self, current_position, exit, maze):
-        costs = []
-
-        for position in self.index_map.get(current_position):
-            if position not in self.step_count_explored_cells and maze[position[0]][position[1]] != "+":
-                steps += 1
-
-                steps = 0
-                while position != exit:
-                    self.get_cost_from_each_movement(position, 0, exit)
-
-                costs.append(steps)
-        cost = min(costs)
-        return cost
-
-
+    def get_exit_indexes(self, maze):
+        border_indexes = []
+        for row_index, row_value in enumerate(maze):
+            for column_index, column_value in enumerate(row_value):
+                if column_value == ".":
+                    if row_index == 0 or row_index == self.m:
+                        border_indexes.append((row_index, column_index))
+                    elif column_index == self.n or column_index == 0:
+                        border_indexes.append((row_index, column_index))
+        return border_indexes
 
     def nearest_exit(self, maze, entrance):
-        self.m = len(maze)-1
-        self.n = len(maze[0])-1
+        self.m = len(maze) - 1
+        self.n = len(maze[0]) - 1
 
-        self.get_steps([entrance], maze)
+        border_list = self.get_exit_indexes(maze)
+        self.populate_adjecent_node_dict([entrance])
 
-        exits = self.get_exits(maze)
-
-
-        costs = []
-        for exits in exits:
-            cost = self.get_cost_from_each_movement([entrance], exit, maze)
-
-            costs.append(cost)
-
-        print(min(costs))
+        path_list_to_borders = {}
 
 
+        # for border in border_list:
+        path_remaining = [(entrance)]
+        step_count = 0
+        visited_list = []
+
+        while path_remaining:
+            current_position = path_remaining.pop(0)
+
+            if not current_position in visited_list:
+                visited_list.append(current_position)
+                adjecent_cells = self.index_map.get(tuple(current_position))
+
+                if tuple(current_position) in border_list:
+                    path_list_to_borders.update({tuple(current_position):step_count})
+                    continue
+                step_count += 1
+                for adjecent_cell in adjecent_cells:
+                    if maze[adjecent_cell[0]][adjecent_cell[1]] != "+":
+                        path_remaining.append(adjecent_cell)
+        final_step_counts = [value for key, value in path_list_to_borders.items()]
+        if final_step_counts:
+            min = min(final_step_counts)
+        else:
+            print("-1")
 
 
 
