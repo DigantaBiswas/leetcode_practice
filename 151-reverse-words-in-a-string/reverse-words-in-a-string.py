@@ -16,12 +16,8 @@ class Solution:
         for i in range(len(wl)-1, -1, -1):
             if started:
                 ns = ns + " "
-                ns += "".join(wl[i])
-            else:
-                ns += "".join(wl[i])
-                started = True
-
-        
+            ns += "".join(wl[i])
+            started = True
         return ns
 
 
